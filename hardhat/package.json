@@ -1,0 +1,22 @@
+{
+  "name": "stream-schedule",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "dotenv": "^16.0.2",
+    "hardhat": "^2.11.2",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@gelatonetwork/ops-sdk": "^2.0.7-beta",
+    "@superfluid-finance/sdk-core": "^0.4.2",
+    "ethers": "^5.7.1"
+  }
+}

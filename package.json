@@ -1,0 +1,53 @@
+{
+  "name": "off-chain",
+  "version": "1.0.0",
+  "description": "Gelato Off chain resolver scaffold",
+  "main": "index.js",
+  "author": "Gelato Network, donoso.eth",
+  "license": "ISC",
+  "scripts": {
+    "codegen": "cd resolver && npx polywrap codegen",
+    "build": "cd resolver && npx polywrap build",
+    "test:env:up": "cd resolver && npx polywrap infra up --modules=eth-ens-ipfs",
+    "test:env:down": "npx polywrap infra down --modules=eth-ens-ipfs",
+    "deploy:wrapper": "npx polywrap deploy",
+    "test": "yarn test:e2e ",
+    "test:e2e": "yarn test:e2e:codegen && jest --passWithNoTests --runInBand --verbose",
+    "test:e2e:codegen": "npx polywrap app codegen -m ./src/__tests__/types/polywrap.app.yaml -g ./src/__tests__/types/wrap",
+    "test:workflow": "npx polywrap run -o ./workflows/output.json -v ./workflows/validator.cue ./workflows/e2e.yaml",
+    "format": "prettier --write '*/**/*.{js,sol,json,md,ts}'",
+    "format:check": "prettier --check '*/**/*.{js,sol,json,md,ts}'",
+    "createTask": "ts-node src/scripts/createTask.ts",
+    "chain": "cd hardhat && npx hardhat --tsconfig ./tsconfig.json node",
+    "compile": "cd hardhat && npx hardhat --tsconfig ./tsconfig.json compile",
+    "size": "cd hardhat && npx hardhat --tsconfig ./tsconfig.json size-contracts",
+    "fork": "cd hardhat && npx hardhat --tsconfig ./tsconfig.json node  --network hardhat",
+    "deploy:hardhat": "cd hardhat && npx hardhat --tsconfig ./tsconfig.json run ./scripts/deploy.ts"
+  },
+  "devDependencies": {
+    "@gelatonetwork/ops-sdk": "2.0.6-beta",
+    "@msgpack/msgpack": "^2.7.2",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@polywrap/wasm-as": "0.3.0",
+    "@types/jest": "27.0.3",
+    "assemblyscript": "0.19.1",
+    "dotenv": "^16.0.1",
+    "ethers": "^5.6.9",
+    "hardhat": "^2.11.2",
+    "jest": "26.6.3",
+    "polywrap": "0.3.0",
+    "ts-jest": "26.5.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",
+    "@nomiclabs/hardhat-ethers": "^2.1.1",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@typechain/hardhat": "^6.1.3",
+    "chai": "^4.3.6",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.2",
+    "typechain": "^8.1.0"
+  }
+}
