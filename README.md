@@ -71,13 +71,28 @@ Remember that docker must run in your computer, if not the module wouln't be abl
 npm run build
 ```
 
-### 6) : deploy to IPFS your module
-Remember that docker must run in your computer, if not the module wouln't be able to be built
+### 6) : deploy  your module to IPFS your
 ```javascript
 npm run deploy:resolver
 ```
+As we will need later the ipfs-hash for creating the task, by deploying we will copy the ipfs-hah to eh hardhat folder
 
-**RECAP**: In this part we have created our resolver assembly module and uploaded to ipfs. Great!, this module can be already consumed by everyone! (under the hood we use polywrapp for creating the assemble module)
+```javascript
+const ipfsHash = output.substring(i + 'wrap://ipfs/'.length,i + 'wrap://ipfs/'.length + 46);
+ fs.writeFileSync(path.join(process.cwd(),"../hardhat/data/ipfsHash.ts"),`export const  ipfsHash = "${ipfsHash}";`)
+```
 
-## Test ee
+**RECAP**: In this part we have created our resolver assembly module and uploaded to ipfs. Great!, this module can be already consumed by everyone! (under the hood we use polywrapp for creating the assembly module)
+
+## Test e2e (hopp other top)
+At this point, we have all of our ingredients, on the hand one we have a contract deployed to Goerli, within the contract there is a method that will nb executed by Gelato ops; and on the other side, we have our assembly module deploy to ipfs (we can think as a kind of cloud function) that polywrap would help us to interpretate. ,,,,
+
+before we run the test
+```javasript
+npm run test
+```
+let us go step by step to understand what is actuall doing
+
+
+
 

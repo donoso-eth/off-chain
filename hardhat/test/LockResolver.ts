@@ -1,9 +1,7 @@
 import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
-
 import { encode } from "@msgpack/msgpack";
-
 import { Lock__factory } from "../typechain-types/factories";
 
 import { PolywrapClient } from "@polywrap/client-js";
@@ -11,7 +9,8 @@ import { IOps__factory } from "../typechain-types/factories/gelato";
 import { IOps } from "../typechain-types/gelato/IOps";
 import { ethers } from "hardhat";
 import {encodeOffModulerArgs, Module} from './helpers/module'
-import { utils } from "ethers";
+
+import { ipfsHash} from '../data/ipfsHash'
 
 
 let ops = "0x03E739ff088825f91fa53c35279F632d038FB081"//"0xc1C6805B857Bef1f412519C4A842522431aFed39";
@@ -58,10 +57,6 @@ describe("Lock Resolver", function () {
 
         let opsContract:IOps = await IOps__factory.connect(ops, owner)
 
-          console.log(61,owner.address)
-
-          let taskcreator = owner.address;
-
         let expectedData = new Lock__factory().interface.encodeFunctionData(
           "resolverUnLock"
         );
@@ -71,9 +66,7 @@ describe("Lock Resolver", function () {
         let userArgsBuffer = encode(userArgs);
         let hexargs = `0x${Buffer.from(userArgsBuffer).toString("hex")}`;
 
-        let oResolverArgs = encodeOffModulerArgs("QmV8LdTComhHuRh2GMVQJv85KTn1mXahCy7ifAtJHkYABk",hexargs)
-
-          console.log(oResolverArgs)
+        let oResolverArgs = encodeOffModulerArgs(ipfsHash,hexargs)
 
         let moduleData = {
           modules: [Module.ORESOLVER],
@@ -90,8 +83,7 @@ describe("Lock Resolver", function () {
         });
 
         //// import client
-        const wrapperUri =
-          "wrap://ipfs/QmV8LdTComhHuRh2GMVQJv85KTn1mXahCy7ifAtJHkYABk"; //`fs/${wrapperPath}/build`;
+        const wrapperUri = `wrap://ipfs/${ipfsHash}` //`fs/${wrapperPath}/build`;
 
         const gelatoArgs = {
           gasPrice: ethers.utils.parseUnits("100", "gwei").toString(),
@@ -99,7 +91,6 @@ describe("Lock Resolver", function () {
         };
 
        
-
       
         let gelatoArgsBuffer = encode(gelatoArgs);
 
