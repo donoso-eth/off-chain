@@ -1,7 +1,7 @@
 import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+
 import { encode } from "@msgpack/msgpack";
 
 import { Lock__factory } from "../typechain-types/factories";
@@ -9,9 +9,14 @@ import { Lock__factory } from "../typechain-types/factories";
 import { PolywrapClient } from "@polywrap/client-js";
 import { IOps__factory } from "../typechain-types/factories/gelato";
 import { IOps } from "../typechain-types/gelato/IOps";
+import { ethers } from "hardhat";
+import {encodeOffModulerArgs, Module} from './helpers/module'
+import { utils } from "ethers";
 
-let ops = "0xc1C6805B857Bef1f412519C4A842522431aFed39";
+
+let ops = "0x03E739ff088825f91fa53c35279F632d038FB081"//"0xc1C6805B857Bef1f412519C4A842522431aFed39";
 let opsExec = "0x683913B3A32ada4F8100458A3E1675425BdAa7DF";
+const ETH = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 
 describe("Lock Resolver", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -28,7 +33,7 @@ describe("Lock Resolver", function () {
     const [owner, otherAccount] = await ethers.getSigners();
 
     const Lock = await ethers.getContractFactory("Lock") 
-    const lock = (await Lock.deploy(unlockTime, ops, { value: lockedAmount })) as Lock;;
+    const lock = (await Lock.deploy(unlockTime, ops, { value: lockedAmount }));;
 
     return { lock, unlockTime, lockedAmount, owner, otherAccount };
   }
@@ -53,10 +58,32 @@ describe("Lock Resolver", function () {
 
         let opsContract:IOps = await IOps__factory.connect(ops, owner)
 
+          console.log(61,owner.address)
 
+          let taskcreator = owner.address;
 
-        
+        let expectedData = new Lock__factory().interface.encodeFunctionData(
+          "resolverUnLock"
+        );
 
+        let execSelector = new Lock__factory().interface.getSighash("resolverUnLock");
+        let userArgs: { guess: string } = { guess: "9" };
+        let userArgsBuffer = encode(userArgs);
+        let hexargs = `0x${Buffer.from(userArgsBuffer).toString("hex")}`;
+
+        let oResolverArgs = encodeOffModulerArgs("QmV8LdTComhHuRh2GMVQJv85KTn1mXahCy7ifAtJHkYABk",hexargs)
+
+          console.log(oResolverArgs)
+
+        let moduleData = {
+          modules: [Module.ORESOLVER],
+          args: [oResolverArgs],
+        };
+
+   
+       let tx = await opsContract.createTask(lock.address,execSelector,moduleData,ETH,{gasLimit:1000000});
+
+       await tx.wait();
 
         const polywrapClient = new PolywrapClient({
           plugins: [],
@@ -71,9 +98,9 @@ describe("Lock Resolver", function () {
           timeStamp: Math.floor(Date.now() / 1000).toString(),
         };
 
-        let userArgs: { guess: string } = { guess: "9" };
+       
 
-        let userArgsBuffer = encode(userArgs);
+      
         let gelatoArgsBuffer = encode(gelatoArgs);
 
         let job = await polywrapClient.invoke({
@@ -110,9 +137,7 @@ describe("Lock Resolver", function () {
 
         data = <{ canExec: Boolean; execData: String }>job.data;
 
-        let expectedData = new Lock__factory().interface.encodeFunctionData(
-          "resolverUnLock"
-        );
+    
 
         expect(data?.canExec).to.be.true;
         expect(data?.execData).to.be.equal(expectedData);
@@ -125,45 +150,9 @@ describe("Lock Resolver", function () {
         // We use lock.connect() to send a transaction from another account
       });
 
-      it("Shouldn't fail if the unlockTime has arrived and the owner calls it", async function () {
-        const { lock, unlockTime } = await loadFixture(
-          deployOneYearLockFixture
-        );
-
-        // Transactions are sent using the first signer by default
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw()).not.to.be.reverted;
-      });
+ 
     });
 
-    describe("Events", function () {
-      it("Should emit an event on withdrawals", async function () {
-        const { lock, unlockTime, lockedAmount } = await loadFixture(
-          deployOneYearLockFixture
-        );
 
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw())
-          .to.emit(lock, "Withdrawal")
-          .withArgs(lockedAmount, anyValue); // We accept any value as `when` arg
-      });
-    });
-
-    describe("Transfers", function () {
-      it("Should transfer the funds to the owner", async function () {
-        const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-          deployOneYearLockFixture
-        );
-
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw()).to.changeEtherBalances(
-          [owner, lock],
-          [lockedAmount, -lockedAmount]
-        );
-      });
-    });
   });
 });
