@@ -19,8 +19,8 @@ describe("Gelato simple resolver test", () => {
 
   beforeAll(async () => {
     const dirname: string = path.resolve(__dirname);
-    const wrapperPath: string = path.join(dirname, "..", "..");
-    wrapperUri = `fs/${wrapperPath}/build`;
+   // const wrapperPath: string = path.join(dirname, "..", "..");
+    wrapperUri = 'wrap://ipfs/QmT6a1JcrHzJvYkLe4PhyHaSZMSdYiDh7pmhsLFPee8yyG' //`fs/${wrapperPath}/build`; 
 
     const gelatoArgs = {
       gasPrice: ethers.utils.parseUnits("100", "gwei").toString(),

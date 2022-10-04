@@ -19,7 +19,9 @@ type CheckerResult {
 """
 Only modify "UserArgs"
 """
-type UserArgs {}
+type UserArgs {
+guess: String!
+}
 
 type GelatoArgs {
   gasPrice: BigInt!

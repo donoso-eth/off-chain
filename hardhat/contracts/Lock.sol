@@ -7,23 +7,28 @@ pragma solidity ^0.8.9;
 contract Lock {
     uint public unlockTime;
     address payable public owner;
-
+    address ops;
     event Withdrawal(uint amount, uint when);
 
-    constructor(uint _unlockTime) payable {
+    constructor(uint _unlockTime, address _ops) payable {
         require(
             block.timestamp < _unlockTime,
             "Unlock time should be in the future"
         );
-
+        ops = _ops;
         unlockTime = _unlockTime;
         owner = payable(msg.sender);
     }
 
-    function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+    function resolverUnLock() external onlyOps {
 
+        unlockTime = block.timestamp;
+
+
+    }
+
+    function withdraw() public {
+       
         require(block.timestamp >= unlockTime, "You can't withdraw yet");
         require(msg.sender == owner, "You aren't the owner");
 
@@ -31,4 +36,10 @@ contract Lock {
 
         owner.transfer(address(this).balance);
     }
+
+    modifier onlyOps() {
+    require(msg.sender == address(ops), "OpsReady: onlyOps");
+    _;
+  }
+
 }
