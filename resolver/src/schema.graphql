@@ -20,7 +20,7 @@ type CheckerResult {
 Only modify "UserArgs"
 """
 type UserArgs {
-guess: String!
+even: Boolean!
 }
 
 type GelatoArgs {

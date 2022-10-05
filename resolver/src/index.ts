@@ -10,6 +10,7 @@ import { Args_checker, CheckerResult } from "./wrap";
 import { GelatoArgs } from "./wrap/GelatoArgs";
 import { UserArgs } from "./wrap/UserArgs";
 import { execData} from './contract/execData' 
+import { BLOCK } from "@polywrap/wasm-as/assembly/msgpack/utils";
 
 export function checker(args: Args_checker): CheckerResult {
   let userArgs = UserArgs.fromBuffer(args.userArgsBuffer);
@@ -18,11 +19,9 @@ export function checker(args: Args_checker): CheckerResult {
   let gasPrice = gelatoArgs.gasPrice;
   let timeStamp = gelatoArgs.timeStamp;
 
-  let guess = userArgs.guess;
+  let even = userArgs.even;
 
-  let mod = BigInt.from(guess).mod(BigInt.from(2));
-
-  let canExec = mod == BigInt.from(0) ? true : false;
+  let canExec =  even == true ? timeStamp.mod(BigInt.from(2))  == BigInt.from(0) ? true :   false  : timeStamp.mod(BigInt.from(2))  == BigInt.from(0) ? false : true;
 
   let payload = execData;
 
