@@ -95,7 +95,7 @@ fs.writeFileSync(
 
 **RECAP**: In this part, we have created our resolver assembly module and uploaded it to ipfs. Great!, everyone can already consume this module! (under the hood, we use polywrapp for creating the assembly module)
 
-## Test e2e (hopp other top)
+## Test e2e (hopp oder top)
 
 At this point, we have all of our ingredients. On the one hand, we have a contract deployed to Goerli. Within the contract there is a method that will nb executed by Gelato ops; and on the other side, we have our assembly module deploy to ipfs (we can think as a kind of cloud function) that polywrap would help us withh it. ,,,,
 
