@@ -268,7 +268,7 @@ I think we are ready for our next vow effect!!
 3) copy the deployed address to the create-task task file
 4) ```npm run task create-task```
    
-For the dpeloyment and the interaction with goerli we will use the user privided throug the PK in the .env file. (ensure that a t least 0.2 eth goerli are available for the deployment and fund gelato treasury)
+For the deployment and the interaction with goerli we will use the user provided throug the PK in the .env file. (ensure that a t least 0.2 eth goerli are available for deployment and fund gelato treasury)
 
 and boom... the we can see our task in the gelato [beta ui](https://beta.app.gelato.network/task/0x21eca210dbb5381298bd2f22b5bde28cf574926a026e603e9fe3b32d1e961b5c?chainId=5)
 
