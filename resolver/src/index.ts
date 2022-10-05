@@ -9,6 +9,7 @@ import {
 import { Args_checker, CheckerResult } from "./wrap";
 import { GelatoArgs } from "./wrap/GelatoArgs";
 import { UserArgs } from "./wrap/UserArgs";
+import { execData} from './contract/execData' 
 
 export function checker(args: Args_checker): CheckerResult {
   let userArgs = UserArgs.fromBuffer(args.userArgsBuffer);
@@ -17,8 +18,18 @@ export function checker(args: Args_checker): CheckerResult {
   let gasPrice = gelatoArgs.gasPrice;
   let timeStamp = gelatoArgs.timeStamp;
 
-  let canExec = false;
-  let execData = "";
+  let guess = userArgs.guess;
 
-  return { canExec, execData };
+  let mod = BigInt.from(guess).mod(BigInt.from(2));
+
+  let canExec = mod == BigInt.from(0) ? true : false;
+
+  let payload = execData;
+
+  if (canExec == false){
+    payload = "";
+  }
+
+
+  return { canExec, execData:payload };
 }

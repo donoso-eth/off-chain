@@ -3,6 +3,9 @@ import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
+let ops ="0xc1C6805B857Bef1f412519C4A842522431aFed39";
+let opsExec  = "0x683913B3A32ada4F8100458A3E1675425BdAa7DF";
+
 describe("Lock", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
@@ -18,7 +21,7 @@ describe("Lock", function () {
     const [owner, otherAccount] = await ethers.getSigners();
 
     const Lock = await ethers.getContractFactory("Lock");
-    const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+    const lock = await Lock.deploy(unlockTime,ops, { value: lockedAmount });
 
     return { lock, unlockTime, lockedAmount, owner, otherAccount };
   }
@@ -50,7 +53,7 @@ describe("Lock", function () {
       // We don't use the fixture here because we want a different deployment
       const latestTime = await time.latest();
       const Lock = await ethers.getContractFactory("Lock");
-      await expect(Lock.deploy(latestTime, { value: 1 })).to.be.revertedWith(
+      await expect(Lock.deploy(latestTime,ops, { value: 1 })).to.be.revertedWith(
         "Unlock time should be in the future"
       );
     });
@@ -106,19 +109,6 @@ describe("Lock", function () {
       });
     });
 
-    describe("Transfers", function () {
-      it("Should transfer the funds to the owner", async function () {
-        const { lock, unlockTime, lockedAmount, owner } = await loadFixture(
-          deployOneYearLockFixture
-        );
 
-        await time.increaseTo(unlockTime);
-
-        await expect(lock.withdraw()).to.changeEtherBalances(
-          [owner, lock],
-          [lockedAmount, -lockedAmount]
-        );
-      });
-    });
   });
 });

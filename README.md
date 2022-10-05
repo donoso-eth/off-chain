@@ -1,279 +1,98 @@
-# (BETA) Gelato Off-chain Resolver Template
 
-Off-chain resolver enables you to automate smart contract function calls based on off-chain conditions.
 
-- [Dependencies](#install-dependencies)
-- [Env variables](#env-variables)
-- [Creating off-chain resolver](#creating-off-chain-resolver)
-  - [Define schema](#1-defining-schema-for-checker-arguments)
-  - [Generate schema types](#2-generate-schema-types)
-  - [Writing checker function](#3-writing-your-checker-function)
-    - [Checker arguments](#accessing-checker-arguments)
-    - [Using modules](#using-modules)
-    - [Handling objects](#handling-objects)
-    - [Debug message](#returning-debug-message)
-- [Testing off-chain resolver](#testing-off-chain-resolver)
-- [Deploying off-chain resolver](#deploying-off-chain-resolver)
-- [Creating off-chain resolver task](#creating-off-chain-resolver-task)
-- [Examples](#off-chain-resolver-examples)
 
-## Install dependencies
 
-- `nvm install && nvm use`
+# 🍦 Gelato Off Chain Resolver &&  👷 Hardhat
 
-- `yarn install`
+This quick and dirty repo should help devs to test V2 off-chain resolvers with ease, providing a hardhat instance and the required infrastracture to get up and running.
 
-- have `docker` running
+This repo consists in the [off-chain resover template](https://github.com/gelatodigital/off-chain-resolver-template) as well as a hardhat folder with a contract called Lock.sol. This contract locks an amount for a one year. We have created a method calle "unLock()" that will be called by Gelato OPS, when certain conditions off chain happen.
 
-## Env variables
 
-Create a `.env` file with your private config.
+A short refresher about Gelato:
+- execData is the execution payload in bytes that Gelato will execute in our case, the unlock() method
+- exexAddress, the address of the deployed contract 
+- canExec, boolean returned by gelato resolver/off chain resolver when calling the cheker method and tells Gelato to execute or not
 
-```typescript
-PK= // required for task creation
-CHAINID= // required for testing / task creation
-RPC_URL= // required for testing / task creation
+
+&nbsp; 
+
+# 🏄‍♂️ Quick Start
+
+
+## Contract deployment
+
+### 1) Add the env keys required 
+
+```bash
+INFURA_ID=INFURA_KEY
+CHAINID=31337
+RPC_URL=http://localhost:8545
+PK=YOUR KEY
+```
+You need to input our private key (testing) nad the infure_Key for the forking Goerli. Change the values in .env-example file and rename it to .env
+  &nbsp;  
+### 2) : We open a separate terminal and create a local forked goerli 
+```javascript
+npm run fork
 ```
 
-## Creating off-chain resolver
-
-### 1. Define schema for checker arguments (optional)
-
-In `src/schema.graphql` define the arguments which will be passed into `checker()`. Do not modify other types.
-
-```typescript
-type UserArgs {
-  count: BigInt!
-  counterAddress: string!
-}
+### 3) : We  compile our contract
+```javascript
+npm run compile
 ```
 
-Passing arguments into `checker()` makes the resolver reusable. In this example, multiple tasks can be created with different `counterAddress` while only deploying 1 off-chain resolver.
 
-### 2. Generate schema types
+### 4) : We deploy our contract
+```javascript
+npm run deploy:contract
+```
+It is worth noticing that the deploy script copy the execData defined into the resolver folder for later building our resolver assembly module
 
-Do `yarn codegen` whenever `schema.graphql` is modified.
+```javascript
+  let execData = lock.interface.encodeFunctionData(
+    "resolverUnLock"
+  );
+  writeFileSync(join(process.cwd(),"../resolver/src/contract/execData.ts"),`export const  execData = "${execData}";`)
 
-### 3. Writing your checker function
+```
+**RECAP**: so far we have created the contract that we want gelato to execute when the "off chain resolver" met certain conditions. After that, we will have to create the off-chain resolver assembly module.
 
-#### **Accessing checker arguments**
+## Resolver module
 
-In `src/index.ts`, `checker(args: Args_checker)` is the function which Gelato will call. Do not rename this function.
-
-Getting the arguments passed into `checker`:
-
-```typescript
-let userArgs = UserArgs.fromBuffer(args.userArgsBuffer);
-let gelatoArgs = GelatoArgs.fromBuffer(args.gelatoArgsBuffer);
-
-let count = userArgs.count;
-let counterAddress = userArgs.counterAddress;
-
-let gasPrice = gelatoArgs.gasPrice;
-let timeStamp = gelatoArgs.timeStamp;
+### 5) : Generate the module types
+```javascript
+npm run codegen
 ```
 
-Gelato passes `gasPrice` & `timeStamp` as an argument as well. `gasPrice` can be helpful in estimating the transaction fee of the execution or limit executions to certain `gasPrice`.
-
-#### **Using Modules**
-
-```typescript
-import {
-  Ethereum_Module,
-  Graph_Module,
-  Http_Module,
-  Logger_Module,
-} from "./wrap";
+### 6) : Build your module
+Remember that docker must run in your computer, if not the module wouln't be able to be built
+```javascript
+npm run build
 ```
 
-- Ethereum_Module: similar to ethersJS library.
+### 6) : deploy  your module to IPFS your
+```javascript
+npm run deploy:resolver
+```
+As we will need later the ipfs-hash for creating the task, by deploying we will copy the ipfs-hah to eh hardhat folder
 
-```typescript
-import { Ethereum_Module } from "./wrap";
-
-// calling view functions of smart contract
-const lastExecuted = Ethereum_Module.callContractView({
-  address: counterAddress,
-  method: "function lastExecuted() external view returns(uint256)",
-  args: null,
-  connection: args.connection,
-}).unwrap();
-
-// encoding function data
-const execData = Ethereum_Module.encodeFunction({
-  method: "function increaseCount(uint256)",
-  args: [count],
-}).unwrap();
+```javascript
+const ipfsHash = output.substring(i + 'wrap://ipfs/'.length,i + 'wrap://ipfs/'.length + 46);
+ fs.writeFileSync(path.join(process.cwd(),"../hardhat/data/ipfsHash.ts"),`export const  ipfsHash = "${ipfsHash}";`)
 ```
 
-- Graph_Module: make subgraph queries.
+**RECAP**: In this part we have created our resolver assembly module and uploaded to ipfs. Great!, this module can be already consumed by everyone! (under the hood we use polywrapp for creating the assembly module)
 
-```typescript
-import { Graph_Module } from "./wrap";
+## Test e2e (hopp other top)
+At this point, we have all of our ingredients, on the hand one we have a contract deployed to Goerli, within the contract there is a method that will nb executed by Gelato ops; and on the other side, we have our assembly module deploy to ipfs (we can think as a kind of cloud function) that polywrap would help us to interpretate. ,,,,
 
-const lpPair = Graph_Module.querySubgraph({
-  subgraphAuthor: "uniswap",
-  subgraphName: "uniswap-v2",
-  query: `
-  {
-    users(first: 1){
-      liquidityPositions(first: 1){
-        pair {
-          id
-        }
-      }
-    }
-  }
-`,
-}).unwrap();
+before we run the test
+```javasript
+npm run test
 ```
+let us go step by step to understand what is actuall doing
 
-- Http_Module: make HTTP requests
 
-```typescript
-import { Http_Module } from "./wrap";
 
-let routerApi = `https://api.1inch.io/v4.0/1/approve/spender`;
 
-let routerApiRes = Http_Module.get({
-  request: null,
-  url: routerApi,
-}).unwrap();
-```
-
-- Logger_Module: do `console.log()` from your resolver. (Only for testing purporses)
-
-```typescript
-import { Logger_Logger_LogLevel, Logger_Module } from "./wrap";
-
-Logger_Module.log({
-  level: Logger_Logger_LogLevel.INFO,
-  message: "Hello world",
-});
-```
-
-#### **Handling objects**
-
-Results returned from using Http_Module / Graph_Module can be an object string.
-
-To convert and access the object values:
-
-```typescript
-import { BigInt, JSON } from "@polywrap/wasm-as";
-
-// example data returned from api call
-let resString = `{
-  from: "0x0000000000000000000000000000000000000000",
-  value: "169488101097",
-}`;
-
-let resObj = <JSON.Obj>JSON.parse(resString);
-
-// accessing value of "value"
-let valueJson = quoteResObj.getValue("value");
-if (!valueJson) throw Error("No valueJson");
-let valueString = valueJson.toString();
-
-let valueBigInt = BigInt.fromString(valueString);
-```
-
-To access nested objects:
-
-```typescript
-// example data returned from api call
-let resString = `{
-  from: "0x0000000000000000000000000000000000000000",
-  value: "169488101097",
-  gas: { gasPrice: "161297033108" },
-}`;
-
-let resObj = swapResObj.getObj("resString");
-
-// accessing value of "gasPrice"
-let gasObj = swapResObj.getObj("gas");
-if (!gasObj) throw Error("No gasObj");
-
-let gasPriceJson = gasObj.getValue("gasPrice");
-if (!gasPriceJson) throw Error("No gasPriceJson");
-let gasPriceString = gasPriceJson.toString();
-
-let gasPriceBigInt = BigInt.fromString(gasPriceString);
-```
-
-#### **Returning debug message**
-
-To get information about why your task isn't executing after you have created your task, you can return encoded string messages in `execData`.
-
-This message will be returned and shown on the Gelato Ops task page whenever Gelato calls your off-chain resolver.
-
-```typescript
-let execData = Ethereum_Module.solidityPack({
-  types: ["string"],
-  values: ["Time not elapsed"],
-}).unwrap();
-
-return { canExec: false, execData };
-```
-
-## Testing off-chain resolver
-
-A unit testing template can be found in `src/__tests__/index.test.ts`
-
-Fill in the off-chain resolver arguments if necessary.
-
-```typescript
-const userArgs: UserArgs = {
-  counterAddress: "0x04bDBB7eF8C17117d8Ef884029c268b7BecB2a19",
-  count: 1,
-};
-```
-
-Fill in the expected returns from calling the off-chain resolver.
-
-```typescript
-const counterAbi = ["function increaseCount(uint256) external"];
-const counterInterface = new ethers.utils.Interface(counterAbi);
-const expectedExecData = counterInterface.encodeFunctionData("increaseCount", [
-  1,
-]);
-
-const expected = {
-  canExec: true,
-  execData: expectedExecData,
-};
-```
-
-`yarn test` to start the test.
-
-## Deploying off-chain resolver
-
-Once you have your off-chain resolver ready and tested run `yarn deploy`.
-
-```typescript
-> yarn deploy
-
-> Successfully executed stage 'ipfs_deploy'. Result: 'wrap://ipfs/Qmd77yP8rEcjoMqzCpKJwU8DK1aApDZh5wjD7sn8gJw8cw'
-```
-
-Your off-chain resolver is now pinned on ipfs with the hash e.g. `Qmd77yP8rEcjoMqzCpKJwU8DK1aApDZh5wjD7sn8gJw8cw`
-
-## Creating off-chain resolver task
-
-Fill up the necessary parameters in `src/srcipts/createTask.ts`
-
-```typescript
-const taskName = "";
-const execAddress = "";
-const execSelector = "";
-const offChainResolverHash = "";
-const offChainResolverArgs = {};
-```
-
-`yarn createTask` to create the off-chain resolver task.
-
-Since this feature is still in BETA, please reach out to us with your EOA address which created the task. You need to be whitelisted for your task to work.
-
-## Off-chain resolver examples
-
-You can find more examples of off-chain resolver in this [repo](https://github.com/gelatodigital/off-chain-resolver-examples)
-.
