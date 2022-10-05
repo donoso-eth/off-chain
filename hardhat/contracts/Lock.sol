@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.0;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 contract Lock {
     uint public unlockTime;
@@ -22,13 +23,16 @@ contract Lock {
 
     function resolverUnLock() external onlyOps {
 
-        unlockTime = block.timestamp;
-
+        console.log('unlocking');
+        unlockTime = 0;
+        
 
     }
 
     function withdraw() public {
        
+        console.log(unlockTime);
+
         require(block.timestamp >= unlockTime, "You can't withdraw yet");
         require(msg.sender == owner, "You aren't the owner");
 

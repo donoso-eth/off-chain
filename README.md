@@ -99,13 +99,14 @@ fs.writeFileSync(
 
 At this point, we have all of our ingredients, on the hand one we have a contract deployed to Goerli, within the contract there is a method that will nb executed by Gelato ops; and on the other side, we have our assembly module deploy to ipfs (we can think as a kind of cloud function) that polywrap would help us to interpretate. ,,,,
 
-before we run the test
+before we run the test in file [LockResolver.ts](https://github.com/donoso-eth/off-chain/blob/master/hardhat/test/LockResolver.ts).
+
 
 ```javasript
-npm run test
+npm run contracts:test
 ```
 
-let us go step by step to understand what our tet is actually doing
+let us go step by step to understand the process
 
 1. First we deploy pur contract to the goerli forked network
 
@@ -171,6 +172,8 @@ let tx = await treasury.depositFunds(owner.address, ETH, amount, {
 If canExec is true, then we execute the payload. With Off cahin resolvers the process is the same, however we are not checking the condicion on-chain but off-chain. For doing that we will query a sort of cloud-function (our assembly module) which is stored on IPFS.
 
 We have created our assembly module with poliwrap, so we will have to use the polywrap client to interact with.
+In our calls we change the blocktimestamp, if is an even number will return canExec = true, (we can change it by creating the task)
+
 
 ```javascript
 import { PolywrapClient } from "@polywrap/client-js";
@@ -178,7 +181,7 @@ import { PolywrapClient } from "@polywrap/client-js";
 const wrapperUri = `wrap://ipfs/${ipfsHash}`;
 
 const gelatoArgs = {
-  gasPrice: ethers.utils.parseUnits("100", "gwei").toString(),
+  gasPrice: "10",
   timeStamp: Math.floor(Date.now() / 1000).toString(),
 };
 

@@ -10,7 +10,6 @@ import { Args_checker, CheckerResult } from "./wrap";
 import { GelatoArgs } from "./wrap/GelatoArgs";
 import { UserArgs } from "./wrap/UserArgs";
 import { execData} from './contract/execData' 
-import { BLOCK } from "@polywrap/wasm-as/assembly/msgpack/utils";
 
 export function checker(args: Args_checker): CheckerResult {
   let userArgs = UserArgs.fromBuffer(args.userArgsBuffer);
