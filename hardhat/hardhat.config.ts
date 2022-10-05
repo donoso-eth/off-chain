@@ -6,12 +6,22 @@ import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
+import { existsSync } from "fs-extra";
+import * as glob from 'glob';
 
 dotenv.config();
 require('dotenv').config({ path: resolve(__dirname, '../.env') })
 const INFURA_ID = process.env["INFURA_ID"];
 
-const defaultNetwork = "localhost";
+
+if (existsSync('./typechain-types')) {
+  glob.sync('./tasks/**/*.ts').forEach(function (file: any) {
+    require(resolve(file));
+  });
+}
+
+let defaultNetwork = "goerli";
+defaultNetwork = "localhost";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.17",

@@ -18,6 +18,7 @@
     "format": "prettier --write '*/**/*.{js,sol,json,md,ts}'",
     "format:check": "prettier --check '*/**/*.{js,sol,json,md,ts}'",
     "createTask": "ts-node src/scripts/createTask.ts",
+    "task": "cd hardhat && npx hardhat --tsconfig ./tsconfig.hardhat.json",
     "chain": "cd hardhat && npx hardhat --tsconfig ./tsconfig.hardhat.json node",
     "compile": "cd hardhat && npx hardhat --tsconfig ./tsconfig.hardhat.json compile",
     "size": "cd hardhat && npx hardhat --tsconfig ./tsconfig.hardhat.json size-contracts",
