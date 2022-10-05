@@ -2048,8 +2048,6 @@
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.3.tgz#472eaab5f15c1ffdd7f8628bd4c4f753995ec79e"
   integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
 
-<<<<<<< HEAD
-=======
 "@typechain/ethers-v5@^10.1.0":
   version "10.1.0"
   resolved "https://registry.yarnpkg.com/@typechain/ethers-v5/-/ethers-v5-10.1.0.tgz#068d7dc7014502354696dab59590a7841091e951"
@@ -2065,7 +2063,6 @@
   dependencies:
     ethers "^5.0.2"
 
->>>>>>> dd4dedd75c50755cfc36f4708286c0d527ecbc43
 "@typechain/hardhat@^6.1.3":
   version "6.1.3"
   resolved "https://registry.yarnpkg.com/@typechain/hardhat/-/hardhat-6.1.3.tgz#e6121502eb64903ab562d89e094a5506e7b86822"

@@ -1,28 +1,22 @@
-
-
-
-
-# 🍦 Gelato Off Chain Resolver &&  👷 Hardhat
+# 🍦 Gelato Off Chain Resolver && 👷 Hardhat
 
 This quick and dirty repo should help devs to test V2 off-chain resolvers with ease, providing a hardhat instance and the required infrastracture to get up and running.
 
 This repo consists in the [off-chain resover template](https://github.com/gelatodigital/off-chain-resolver-template) as well as a hardhat folder with a contract called Lock.sol. This contract locks an amount for a one year. We have created a method calle "unLock()" that will be called by Gelato OPS, when certain conditions off chain happen.
 
-
 A short refresher about Gelato:
+
 - execData is the execution payload in bytes that Gelato will execute in our case, the unlock() method
-- exexAddress, the address of the deployed contract 
+- exexAddress, the address of the deployed contract
 - canExec, boolean returned by gelato resolver/off chain resolver when calling the cheker method and tells Gelato to execute or not
 
-
-&nbsp; 
+&nbsp;
 
 # 🏄‍♂️ Quick Start
 
-
 ## Contract deployment
 
-### 1) Add the env keys required 
+### 1) Add the env keys required
 
 ```bash
 INFURA_ID=INFURA_KEY
@@ -30,69 +24,234 @@ CHAINID=31337
 RPC_URL=http://localhost:8545
 PK=YOUR KEY
 ```
+
 You need to input our private key (testing) nad the infure_Key for the forking Goerli. Change the values in .env-example file and rename it to .env
-  &nbsp;  
-### 2) : We open a separate terminal and create a local forked goerli 
+&nbsp;
+
+### 2) : We open a separate terminal and create a local forked goerli
+
 ```javascript
 npm run fork
 ```
 
-### 3) : We  compile our contract
+### 3) : We compile our contract
+
 ```javascript
 npm run compile
 ```
 
-
 ### 4) : We deploy our contract
+
 ```javascript
 npm run deploy:contract
 ```
+
 It is worth noticing that the deploy script copy the execData defined into the resolver folder for later building our resolver assembly module
 
 ```javascript
-  let execData = lock.interface.encodeFunctionData(
-    "resolverUnLock"
-  );
-  writeFileSync(join(process.cwd(),"../resolver/src/contract/execData.ts"),`export const  execData = "${execData}";`)
-
+let execData = lock.interface.encodeFunctionData("resolverUnLock");
+writeFileSync(
+  join(process.cwd(), "../resolver/src/contract/execData.ts"),
+  `export const  execData = "${execData}";`
+);
 ```
+
 **RECAP**: so far we have created the contract that we want gelato to execute when the "off chain resolver" met certain conditions. After that, we will have to create the off-chain resolver assembly module.
 
 ## Resolver module
 
 ### 5) : Generate the module types
+
 ```javascript
 npm run codegen
 ```
 
 ### 6) : Build your module
+
 Remember that docker must run in your computer, if not the module wouln't be able to be built
+
 ```javascript
 npm run build
 ```
 
-### 6) : deploy  your module to IPFS your
+### 6) : deploy your module to IPFS your
+
 ```javascript
 npm run deploy:resolver
 ```
+
 As we will need later the ipfs-hash for creating the task, by deploying we will copy the ipfs-hah to eh hardhat folder
 
 ```javascript
-const ipfsHash = output.substring(i + 'wrap://ipfs/'.length,i + 'wrap://ipfs/'.length + 46);
- fs.writeFileSync(path.join(process.cwd(),"../hardhat/data/ipfsHash.ts"),`export const  ipfsHash = "${ipfsHash}";`)
+const ipfsHash = output.substring(
+  i + "wrap://ipfs/".length,
+  i + "wrap://ipfs/".length + 46
+);
+fs.writeFileSync(
+  path.join(process.cwd(), "../hardhat/data/ipfsHash.ts"),
+  `export const  ipfsHash = "${ipfsHash}";`
+);
 ```
 
 **RECAP**: In this part we have created our resolver assembly module and uploaded to ipfs. Great!, this module can be already consumed by everyone! (under the hood we use polywrapp for creating the assembly module)
 
 ## Test e2e (hopp other top)
+
 At this point, we have all of our ingredients, on the hand one we have a contract deployed to Goerli, within the contract there is a method that will nb executed by Gelato ops; and on the other side, we have our assembly module deploy to ipfs (we can think as a kind of cloud function) that polywrap would help us to interpretate. ,,,,
 
 before we run the test
+
 ```javasript
 npm run test
 ```
-let us go step by step to understand what is actuall doing
 
+let us go step by step to understand what our tet is actually doing
 
+1. First we deploy pur contract to the goerli forked network
 
+```javascript
+const [owner, otherAccount] = await ethers.getSigners();
+const Lock = await ethers.getContractFactory("Lock");
+const lock = await Lock.deploy(unlockTime, ops, { value: lockedAmount });
+```
 
+2. Create an instance of an Ops contract
+
+```javascript
+let opsContract: IOps = await IOps__factory.connect(ops, owner);
+```
+
+As v2 is still in beta for the off resolver module, we are not going to interact with the Goerli Ops contract, we will though use the Ops contract with Off cahin capabilities
+
+```javascript
+"0xc1C6805B857Bef1f412519C4A842522431aFed39"; // goerli Ops contract
+"0x03E739ff088825f91fa53c35279F632d038FB081"; // goerli Ops contract with Off Chain functionality
+```
+
+as later on, we will execute the task we are requird to impersonate the gelato address
+
+```javascript
+// opsExec on Goerli
+"0x683913B3A32ada4F8100458A3E1675425BdAa7DF";
+
+await network.provider.request({
+  method: "hardhat_impersonateAccount",
+  params: [opsExec],
+});
+
+let executor = await ethers.provider.getSigner(opsExec);
+```
+
+We have choosen to pay with the treasury, therefore we will hace to fund the treasury
+
+```javascript
+// treasuty address for off-chain resolver
+"0xa620799451Fab255A16550776c08Bc461C8F0aBE"
+let treasury = new Contract(
+      opsTreasury,
+      gelato_treasury_abi,
+      owner
+    ) as ITaskTreasuryUpgradable;
+
+let amount = parseEther("0.1");
+
+let tx = await treasury.depositFunds(owner.address, ETH, amount, {
+      value: amount,
+    });
+```
+
+3. Communicate with the off chain resolver.  
+   &nbsp;So far nothing new. Now is when things starts to get interesting. When working previously with gelato, we had a resolver "on-chain", that returned following object.
+
+```javascript
+  { canExec:boolean,
+    payload:bytes }
+```
+
+If canExec is true, then we execute the payload. With Off cahin resolvers the process is the same, however we are not checking the condicion on-chain but off-chain. For doing that we will query a sort of cloud-function (our assembly module) which is stored on IPFS.
+
+We have created our assembly module with poliwrap, so we will have to use the polywrap client to interact with.
+
+```javascript
+import { PolywrapClient } from "@polywrap/client-js";
+
+const wrapperUri = `wrap://ipfs/${ipfsHash}`;
+
+const gelatoArgs = {
+  gasPrice: ethers.utils.parseUnits("100", "gwei").toString(),
+  timeStamp: Math.floor(Date.now() / 1000).toString(),
+};
+
+let gelatoArgsBuffer = encode(gelatoArgs);
+
+let job = await polywrapClient.invoke({
+  uri: wrapperUri,
+  method: "checker",
+  args: {
+    userArgsBuffer,
+    gelatoArgsBuffer,
+  },
+});
+```
+
+that will return `canExec` and `payload`.
+
+4. create the Gelato taks woth the new v2 module features
+
+```javascript
+let execSelector = new Lock__factory().interface.getSighash("resolverUnLock");
+
+tx = await opsContract.createTask(lock.address, execSelector, moduleData, ETH, {
+  gasLimit: 1000000,
+});
+
+await tx.wait();
+```
+
+we are requested to pass the moduleData, in our case as we are working with an off-chain resolver, our module data looks like this
+
+```javascript
+let userArgs: { even: boolean } = { even: true };
+let userArgsBuffer = encode(userArgs);
+let hexargs = `0x${Buffer.from(userArgsBuffer).toString("hex")}`;
+let oResolverArgs = encodeOffModulerArgs(ipfsHash, hexargs);
+
+let moduleData = {
+  modules: [Module.ORESOLVER], ///Module.ORESOLVER = 4
+  args: [oResolverArgs],
+};
+```
+
+5. So far so good, now we will try to test it all together by executing the task if the our polywrap client returns canExec = true
+
+```javascript
+      let job = await polywrapClient.invoke({
+          uri: wrapperUri,
+          method: "checker",
+          args: {
+            userArgsBuffer,
+            gelatoArgsBuffer,
+          },
+        });
+
+        let error = job.error;
+        let data = <{ canExec: Boolean; execData: Bytes}>job.data;
+
+        if (data?.canExec == true) {
+          let fee = utils.parseEther("0.1")
+            await opsContract
+              .connect(executor)
+              .exec(
+                owner.address,
+                lock.address,
+                data?.execData,
+                moduleData,
+                fee,
+                ETH,
+                true,
+                true
+              );
+        }
+```
+
+Hurrray! we have deployed, tested and executed and Offchain resolver

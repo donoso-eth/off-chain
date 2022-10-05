@@ -4,8 +4,14 @@ const fs = require('fs-extra')
 
 async function deployIpfs() {
     const { spawn } = await import("child_process");
-  
-    const childProcess = spawn('npx.cmd', ['polywrap', 'deploy' ], {
+
+    let commandToRun = "npx"
+
+    if (/^win/i.test(process.platform)) {
+      commandToRun  = "npx.cmd"
+  }
+
+    const childProcess = spawn(commandToRun, ['polywrap', 'deploy' ], {
 
       stdout:"inherit"
     });
