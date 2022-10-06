@@ -23,7 +23,7 @@ async function main() {
     "resolverUnLock"
   );
 
-console.log(execData)
+ console.log("execData: " + execData)
 
   writeFileSync(join(process.cwd(),"../resolver/src/contract/execData.ts"),`export const  execData = "${execData}";`)
 

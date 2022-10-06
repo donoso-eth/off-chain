@@ -71,7 +71,7 @@ task('create-task', 'create gelato task goerli').setAction(async ({}, hre) => {
       };
 
       tx = await opsContract.createTask(
-        "0x2872Cb18bCC1a1Ae61F1292879e99752072a5967",
+        "0xd73B3BC2707bAd4e02FFa8D5bAC2C15C014DcF45",
         execSelector,
         moduleData,
         ZERO_ADD,
