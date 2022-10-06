@@ -6,8 +6,9 @@ import {copyFileSync, writeFileSync} from 'fs-extra'
 async function main() {
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const ops ="0xc1C6805B857Bef1f412519C4A842522431aFed39";
+  const ops ="0x03E739ff088825f91fa53c35279F632d038FB081";
   const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
+  console.log(unlockTime)
   //const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
   const lockedAmount = ethers.utils.parseEther("0.1");
 
