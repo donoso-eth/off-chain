@@ -21,7 +21,7 @@ if (existsSync('./typechain-types')) {
 }
 
 let defaultNetwork = "goerli";
-defaultNetwork = "localhost";
+//defaultNetwork = "localhost";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.17",
@@ -43,6 +43,11 @@ const config: HardhatUserConfig = {
       gasPrice: 1000000000,
       accounts: [process.env["PK"] as string],
     },
+  },
+  etherscan: {
+     
+    //apiKey: process.env['MUMBAI_API_KEY'],
+     apiKey: process.env['ETHERSCAN_API_KEY'],
   },
 };
 
